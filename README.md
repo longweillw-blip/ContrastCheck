@@ -24,7 +24,7 @@ A powerful tool for analyzing text-background contrast ratios in UI screenshots 
 ### Install from source
 
 ```bash
-git clone https://github.com/yourusername/ContrastCheck.git
+git clone https://github.com/longweillw-blip/ContrastCheck.git
 cd ContrastCheck
 pip install -e .
 ```
@@ -310,7 +310,7 @@ If you use ContrastCheck in your research or project, please cite:
   title = {ContrastCheck: UI Screenshot Contrast Ratio Analyzer},
   author = {ContrastCheck Contributors},
   year = {2026},
-  url = {https://github.com/yourusername/ContrastCheck}
+  url = {https://github.com/longweillw-blip/ContrastCheck}
 }
 ```
 
