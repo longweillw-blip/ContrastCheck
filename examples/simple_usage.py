@@ -12,12 +12,13 @@ def main():
     # Initialize the analyzer
     print("Initializing ContrastCheck...")
     analyzer = ContrastAnalyzer(
-        use_gpu=False,  # Set to True if you have GPU support
-        lang='en'       # Language for OCR (en, ch, etc.)
+        # Note: use_gpu is deprecated in PaddleOCR 3.x+
+        # GPU is automatically detected and used when available
+        lang="en"  # Language for OCR (en, ch, etc.)
     )
 
     # Analyze an image
-    image_path = 'your_screenshot.png'  # Replace with your image path
+    image_path = "your_screenshot.png"  # Replace with your image path
 
     print(f"Analyzing image: {image_path}")
     results = analyzer.analyze_image(image_path)
@@ -40,15 +41,15 @@ def main():
         print()
 
     # Generate text report
-    report = analyzer.generate_report(results, output_format='text')
+    report = analyzer.generate_report(results, output_format="text")
     print(report)
 
     # Save JSON report
-    json_report = analyzer.generate_report(results, output_format='json')
-    with open('contrast_report.json', 'w') as f:
+    json_report = analyzer.generate_report(results, output_format="json")
+    with open("contrast_report.json", "w") as f:
         f.write(json_report)
     print("\nJSON report saved to: contrast_report.json")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

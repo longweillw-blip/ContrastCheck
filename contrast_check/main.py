@@ -24,22 +24,18 @@ class ContrastAnalyzer:
         self,
         use_gpu: bool = False,
         lang: str = "en",
-        n_text_colors: int = 3,
-        n_bg_colors: int = 3,
+        n_colors: int = 2,
     ):
         """
         Initialize the contrast analyzer.
 
         Args:
-            use_gpu: Whether to use GPU for OCR
+            use_gpu: Deprecated. GPU is auto-detected by PaddleOCR 3.x+.
             lang: Language for OCR
-            n_text_colors: Number of color clusters for text
-            n_bg_colors: Number of color clusters for background
+            n_colors: Number of color clusters (default: 2)
         """
         self.ocr_extractor = OCRExtractor(use_gpu=use_gpu, lang=lang)
-        self.color_extractor = ColorExtractor(
-            n_text_colors=n_text_colors, n_bg_colors=n_bg_colors
-        )
+        self.color_extractor = ColorExtractor(n_colors=n_colors)
         self.contrast_checker = ContrastChecker()
 
     def analyze_image(self, image_path: str, is_large_text: bool = False) -> List[Dict]:
@@ -62,25 +58,18 @@ class ContrastAnalyzer:
 
         # Load image
         image = cv2.imread(image_path)
-        image_shape = image.shape
 
         results = []
 
         for idx, region in enumerate(text_regions):
-            # Create text mask
-            text_mask = self.ocr_extractor.get_text_region_mask(
-                image_shape, region["bbox"]
+            # Extract the two dominant colors
+            color1, color2 = self.color_extractor.extract_colors(
+                image, region["bbox"]
             )
 
-            # Extract colors
-            text_color = self.color_extractor.extract_text_color(image, text_mask)
-            bg_color = self.color_extractor.extract_background_color(
-                image, text_mask, region["bbox"]
-            )
-
-            # Analyze contrast
+            # Analyze contrast - calculate_contrast_ratio handles which is lighter/darker
             analysis = self.contrast_checker.analyze_contrast(
-                text_color, bg_color, is_large_text
+                color1, color2, is_large_text
             )
 
             # Add region info
@@ -90,10 +79,10 @@ class ContrastAnalyzer:
                 "confidence": round(region["confidence"], 3),
                 "bbox": region["bbox"],
                 "center": region["center"],
-                "text_color": text_color,
-                "text_color_hex": self.color_extractor.rgb_to_hex(text_color),
-                "bg_color": bg_color,
-                "bg_color_hex": self.color_extractor.rgb_to_hex(bg_color),
+                "color_1": color1,
+                "color_1_hex": self.color_extractor.rgb_to_hex(color1),
+                "color_2": color2,
+                "color_2_hex": self.color_extractor.rgb_to_hex(color2),
                 "contrast_ratio": analysis["contrast_ratio"],
                 "wcag_aa": analysis["wcag_aa"],
                 "wcag_aaa": analysis["wcag_aaa"],
@@ -130,12 +119,12 @@ class ContrastAnalyzer:
                 report_lines.append(f"Text #{result['index']}: {result['text']}")
                 report_lines.append(f"  OCR Confidence: {result['confidence']:.1%}")
                 report_lines.append(
-                    f"  Text Color: RGB{result['text_color']} "
-                    f"({result['text_color_hex']})"
+                    f"  Color 1: RGB{result['color_1']} "
+                    f"({result['color_1_hex']})"
                 )
                 report_lines.append(
-                    f"  Background Color: RGB{result['bg_color']} "
-                    f"({result['bg_color_hex']})"
+                    f"  Color 2: RGB{result['color_2']} "
+                    f"({result['color_2_hex']})"
                 )
                 report_lines.append(f"  Contrast Ratio: {result['contrast_ratio']}:1")
                 report_lines.append(
@@ -193,7 +182,11 @@ def main():
         action="store_true",
         help="Treat all text as large text (18pt+ or 14pt+ bold)",
     )
-    parser.add_argument("--gpu", action="store_true", help="Use GPU for OCR processing")
+    parser.add_argument(
+        "--gpu",
+        action="store_true",
+        help="Deprecated. GPU is auto-detected by PaddleOCR 3.x+",
+    )
     parser.add_argument(
         "--lang", type=str, default="en", help="Language for OCR (default: en)"
     )
@@ -207,6 +200,7 @@ def main():
 
     # Initialize analyzer
     print("Initializing ContrastCheck...")
+    print("Note: First run may take several minutes to download OCR models...")
     analyzer = ContrastAnalyzer(use_gpu=args.gpu, lang=args.lang)
 
     # Analyze image
