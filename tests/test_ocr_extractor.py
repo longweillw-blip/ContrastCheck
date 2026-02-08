@@ -19,18 +19,26 @@ class TestOCRExtractor(unittest.TestCase):
         OCRExtractor(use_gpu=False, lang="en")
 
         # Check that PaddleOCR was called with correct parameters
-        mock_paddle.assert_called_once_with(
-            use_angle_cls=True, lang="en", use_gpu=False, show_log=False
-        )
+        # PaddleOCR 3.x+ only accepts lang parameter
+        mock_paddle.assert_called_once_with(lang="en")
 
     @patch("paddleocr.PaddleOCR")
     def test_initialization_with_gpu(self, mock_paddle):
-        """Test OCRExtractor initialization with GPU."""
-        OCRExtractor(use_gpu=True, lang="ch")
+        """Test OCRExtractor initialization with GPU (deprecated parameter)."""
+        import warnings
 
-        mock_paddle.assert_called_once_with(
-            use_angle_cls=True, lang="ch", use_gpu=True, show_log=False
-        )
+        # use_gpu parameter should trigger deprecation warning
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            OCRExtractor(use_gpu=True, lang="ch")
+
+            # Check deprecation warning was raised
+            self.assertEqual(len(w), 1)
+            self.assertTrue(issubclass(w[0].category, DeprecationWarning))
+            self.assertIn("use_gpu parameter is deprecated", str(w[0].message))
+
+        # PaddleOCR 3.x+ only accepts lang parameter (use_gpu is ignored)
+        mock_paddle.assert_called_once_with(lang="ch")
 
     def test_get_text_region_mask(self):
         """Test text region mask creation."""

@@ -67,12 +67,28 @@ uv pip install -r requirements-dev.txt
 
 ### GPU Support (Optional)
 
-For faster OCR processing with GPU:
+PaddleOCR 3.x automatically detects and uses GPU when available. For GPU support, install the GPU version of PaddlePaddle:
 
 ```bash
 uv pip uninstall paddlepaddle
 uv pip install paddlepaddle-gpu
 ```
+
+**Note**: The `--gpu` flag is deprecated in PaddleOCR 3.x and will be ignored. GPU acceleration is automatically enabled when GPU and CUDA are available.
+
+### Important Notes for Mac Users
+
+⚠️ **First Run**: PaddleOCR will download model files (~25 MB) on first initialization. This may take a few minutes depending on your network speed.
+
+⚠️ **Memory & Performance Optimizations**: The tool automatically:
+- Sets `OMP_NUM_THREADS=1` (required for OpenBlas stability)
+- Resizes large images (>1920px) to prevent memory leaks
+- Uses aggressive garbage collection
+- Scales coordinates back to original image dimensions
+
+📊 **Expected Performance**: For large screenshots (1200x2670px):
+- First run: ~60 seconds (model download + processing)
+- Subsequent runs: ~20-30 seconds (processing only)
 
 ## Quick Start
 
@@ -96,19 +112,15 @@ Analyze with large text threshold:
 contrastcheck your_screenshot.png --large-text
 ```
 
-Use GPU acceleration:
-
-```bash
-contrastcheck your_screenshot.png --gpu
-```
-
 ### Python API Usage
 
 ```python
 from contrast_check.main import ContrastAnalyzer
 
 # Initialize analyzer
-analyzer = ContrastAnalyzer(use_gpu=False, lang='en')
+# Note: use_gpu parameter is deprecated in PaddleOCR 3.x+
+# GPU is automatically detected and used when available
+analyzer = ContrastAnalyzer(lang='en')
 
 # Analyze image
 results = analyzer.analyze_image('screenshot.png')
@@ -220,7 +232,7 @@ optional arguments:
   -f {json,text}, --format {json,text}
                         Output format (default: text)
   --large-text          Treat all text as large text (18pt+ or 14pt+ bold)
-  --gpu                 Use GPU for OCR processing
+  --gpu                 Deprecated. GPU is auto-detected by PaddleOCR 3.x+
   --lang LANG           Language for OCR (default: en)
 ```
 

@@ -11,78 +11,51 @@ from sklearn.cluster import KMeans
 
 class ColorExtractor:
     """
-    Extract text and background colors using K-means clustering.
+    Extract dominant colors using K-means clustering.
     """
 
-    def __init__(self, n_text_colors: int = 3, n_bg_colors: int = 3):
+    def __init__(self, n_colors: int = 2):
         """
         Initialize color extractor.
 
         Args:
-            n_text_colors: Number of clusters for text color extraction
-            n_bg_colors: Number of clusters for background color extraction
+            n_colors: Number of color clusters (default: 2)
         """
-        self.n_text_colors = n_text_colors
-        self.n_bg_colors = n_bg_colors
+        self.n_colors = n_colors
 
-    def extract_text_color(
-        self, image: np.ndarray, text_mask: np.ndarray
-    ) -> Tuple[int, int, int]:
+    def _color_distance(
+        self, color1: Tuple[int, int, int], color2: Tuple[int, int, int]
+    ) -> float:
         """
-        Extract dominant text color from the masked region.
+        Calculate Euclidean distance between two RGB colors.
 
         Args:
-            image: Input image (BGR format)
-            text_mask: Binary mask indicating text region
+            color1: First RGB color tuple
+            color2: Second RGB color tuple
 
         Returns:
-            RGB tuple of the dominant text color
+            Euclidean distance between colors
         """
-        # Extract pixels in text region
-        text_pixels = image[text_mask]
+        return sum((a - b) ** 2 for a, b in zip(color1, color2)) ** 0.5
 
-        if len(text_pixels) == 0:
-            return (0, 0, 0)
-
-        # Convert BGR to RGB
-        text_pixels_rgb = cv2.cvtColor(
-            text_pixels.reshape(-1, 1, 3), cv2.COLOR_BGR2RGB
-        ).reshape(-1, 3)
-
-        # Use K-means to find dominant colors
-        kmeans = KMeans(
-            n_clusters=min(self.n_text_colors, len(text_pixels)),
-            random_state=42,
-            n_init=10,
-        )
-        kmeans.fit(text_pixels_rgb)
-
-        # Get the most common cluster (dominant color)
-        labels = kmeans.labels_
-        counts = np.bincount(labels)
-        dominant_cluster = np.argmax(counts)
-        dominant_color = kmeans.cluster_centers_[dominant_cluster]
-
-        return tuple(dominant_color.astype(int))
-
-    def extract_background_color(
-        self,
-        image: np.ndarray,
-        text_mask: np.ndarray,
-        bbox: List[List[float]],
-        margin: int = 10,
-    ) -> Tuple[int, int, int]:
+    def extract_colors(
+        self, image: np.ndarray, bbox: List[List[float]], margin: int = 10
+    ) -> Tuple[Tuple[int, int, int], Tuple[int, int, int]]:
         """
-        Extract background color around the text region.
+        Extract the two dominant colors from a region using K-means.
+
+        Uses K-means clustering to find the two most dominant colors.
+        The colors are returned sorted by frequency (most common first).
+        ContrastChecker.calculate_contrast_ratio will handle determining
+        which color is lighter/darker for proper contrast calculation.
 
         Args:
             image: Input image (BGR format)
-            text_mask: Binary mask indicating text region
             bbox: Bounding box coordinates [[x1,y1], [x2,y2], [x3,y3], [x4,y4]]
-            margin: Margin around text box for background sampling
+            margin: Margin around text box for sampling (default: 10 pixels)
 
         Returns:
-            RGB tuple of the dominant background color
+            Tuple of (color1, color2) as RGB tuples, sorted by frequency
         """
         h, w = image.shape[:2]
 
@@ -93,35 +66,79 @@ class ColorExtractor:
         y_min = max(0, int(np.min(bbox_array[:, 1])) - margin)
         y_max = min(h, int(np.max(bbox_array[:, 1])) + margin)
 
-        # Create background mask (region around text, excluding text itself)
-        bg_mask = np.zeros((h, w), dtype=bool)
-        bg_mask[y_min:y_max, x_min:x_max] = True
-        bg_mask[text_mask] = False
+        # Extract region pixels
+        region = image[y_min:y_max, x_min:x_max]
 
-        # Extract background pixels
-        bg_pixels = image[bg_mask]
+        if region.size == 0:
+            return ((0, 0, 0), (255, 255, 255))
 
-        if len(bg_pixels) == 0:
-            return (255, 255, 255)
+        # Convert BGR to RGB and flatten
+        pixels_rgb = cv2.cvtColor(region, cv2.COLOR_BGR2RGB).reshape(-1, 3)
 
-        # Convert BGR to RGB
-        bg_pixels_rgb = cv2.cvtColor(
-            bg_pixels.reshape(-1, 1, 3), cv2.COLOR_BGR2RGB
-        ).reshape(-1, 3)
+        if len(pixels_rgb) < self.n_colors:
+            # Not enough pixels for clustering
+            return ((0, 0, 0), (255, 255, 255))
 
-        # Use K-means to find dominant colors
-        kmeans = KMeans(
-            n_clusters=min(self.n_bg_colors, len(bg_pixels)), random_state=42, n_init=10
-        )
-        kmeans.fit(bg_pixels_rgb)
+        # Use K-means to find the two dominant colors
+        kmeans = KMeans(n_clusters=self.n_colors, random_state=42, n_init=10)
+        kmeans.fit(pixels_rgb)
 
-        # Get the most common cluster (dominant color)
+        # Get cluster centers sorted by pixel count
         labels = kmeans.labels_
         counts = np.bincount(labels)
-        dominant_cluster = np.argmax(counts)
-        dominant_color = kmeans.cluster_centers_[dominant_cluster]
 
-        return tuple(dominant_color.astype(int))
+        # Sort clusters by count (descending)
+        sorted_indices = np.argsort(counts)[::-1]
+        colors = kmeans.cluster_centers_[sorted_indices]
+
+        # Return the two dominant colors
+        color1 = tuple(colors[0].astype(int))
+        color2 = tuple(colors[1].astype(int)) if len(colors) > 1 else (255, 255, 255)
+
+        # If colors are too similar, try to find more distinct colors
+        min_distance = 50  # Minimum Euclidean distance for distinct colors
+        if self._color_distance(color1, color2) < min_distance:
+            # Try with more clusters and pick the two most distinct ones
+            try:
+                kmeans_more = KMeans(
+                    n_clusters=min(5, len(pixels_rgb)), random_state=42, n_init=10
+                )
+                kmeans_more.fit(pixels_rgb)
+                labels_more = kmeans_more.labels_
+                counts_more = np.bincount(labels_more)
+                sorted_indices_more = np.argsort(counts_more)[::-1]
+                colors_more = kmeans_more.cluster_centers_[sorted_indices_more]
+
+                # Find two colors that are sufficiently different
+                best_pair = None
+                best_distance = 0
+                for i in range(min(3, len(colors_more))):
+                    for j in range(i + 1, min(4, len(colors_more))):
+                        c1 = tuple(colors_more[i].astype(int))
+                        c2 = tuple(colors_more[j].astype(int))
+                        dist = self._color_distance(c1, c2)
+                        if dist > best_distance:
+                            best_distance = dist
+                            best_pair = (c1, c2)
+                        if dist >= min_distance:
+                            return (c1, c2)
+
+                # If we found a better pair, use it
+                if best_pair and best_distance >= 10:
+                    return best_pair
+
+            except Exception:
+                pass
+
+            # Fallback: return white and black if colors are too similar
+            if self._color_distance(color1, (255, 255, 255)) > self._color_distance(
+                color1, (0, 0, 0)
+            ):
+                return (color1, (0, 0, 0))
+            else:
+                return (color1, (255, 255, 255))
+
+        return (color1, color2)
 
     @staticmethod
     def rgb_to_hex(rgb: Tuple[int, int, int]) -> str:
