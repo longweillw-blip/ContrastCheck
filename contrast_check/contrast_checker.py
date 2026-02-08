@@ -2,8 +2,8 @@
 Contrast ratio calculation and WCAG compliance checking.
 """
 
-from typing import Tuple, Dict
 import math
+from typing import Dict, Tuple
 
 
 class ContrastChecker:
@@ -48,9 +48,7 @@ class ContrastChecker:
 
     @classmethod
     def calculate_contrast_ratio(
-        cls,
-        color1: Tuple[int, int, int],
-        color2: Tuple[int, int, int]
+        cls, color1: Tuple[int, int, int], color2: Tuple[int, int, int]
     ) -> float:
         """
         Calculate contrast ratio between two colors.
@@ -74,9 +72,7 @@ class ContrastChecker:
 
     @classmethod
     def check_wcag_compliance(
-        cls,
-        contrast_ratio: float,
-        is_large_text: bool = False
+        cls, contrast_ratio: float, is_large_text: bool = False
     ) -> Dict[str, bool]:
         """
         Check WCAG compliance levels for a contrast ratio.
@@ -95,11 +91,7 @@ class ContrastChecker:
             aa_pass = contrast_ratio >= cls.WCAG_AA_NORMAL
             aaa_pass = contrast_ratio >= cls.WCAG_AAA_NORMAL
 
-        return {
-            'AA': aa_pass,
-            'AAA': aaa_pass,
-            'ratio': round(contrast_ratio, 2)
-        }
+        return {"AA": aa_pass, "AAA": aaa_pass, "ratio": round(contrast_ratio, 2)}
 
     @classmethod
     def get_contrast_level(cls, contrast_ratio: float) -> str:
@@ -126,7 +118,7 @@ class ContrastChecker:
         cls,
         text_color: Tuple[int, int, int],
         bg_color: Tuple[int, int, int],
-        is_large_text: bool = False
+        is_large_text: bool = False,
     ) -> Dict:
         """
         Perform complete contrast analysis.
@@ -144,11 +136,11 @@ class ContrastChecker:
         level = cls.get_contrast_level(contrast_ratio)
 
         return {
-            'text_color': text_color,
-            'bg_color': bg_color,
-            'contrast_ratio': round(contrast_ratio, 2),
-            'wcag_aa': compliance['AA'],
-            'wcag_aaa': compliance['AAA'],
-            'level': level,
-            'is_large_text': is_large_text
+            "text_color": text_color,
+            "bg_color": bg_color,
+            "contrast_ratio": round(contrast_ratio, 2),
+            "wcag_aa": compliance["AA"],
+            "wcag_aaa": compliance["AAA"],
+            "level": level,
+            "is_large_text": is_large_text,
         }

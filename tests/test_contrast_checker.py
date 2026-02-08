@@ -3,6 +3,7 @@ Unit tests for ContrastChecker module.
 """
 
 import unittest
+
 from contrast_check.contrast_checker import ContrastChecker
 
 
@@ -52,8 +53,8 @@ class TestContrastChecker(unittest.TestCase):
         white = (255, 255, 255)
         ratio = self.checker.calculate_contrast_ratio(black, white)
         compliance = self.checker.check_wcag_compliance(ratio, is_large_text=False)
-        self.assertTrue(compliance['AA'])
-        self.assertTrue(compliance['AAA'])
+        self.assertTrue(compliance["AA"])
+        self.assertTrue(compliance["AAA"])
 
     def test_wcag_compliance_aa_normal_fail(self):
         """Test WCAG AA compliance for normal text (failing)."""
@@ -62,8 +63,8 @@ class TestContrastChecker(unittest.TestCase):
         white = (255, 255, 255)
         ratio = self.checker.calculate_contrast_ratio(light_gray, white)
         compliance = self.checker.check_wcag_compliance(ratio, is_large_text=False)
-        self.assertFalse(compliance['AA'])
-        self.assertFalse(compliance['AAA'])
+        self.assertFalse(compliance["AA"])
+        self.assertFalse(compliance["AAA"])
 
     def test_wcag_compliance_large_text(self):
         """Test WCAG compliance for large text."""
@@ -71,11 +72,6 @@ class TestContrastChecker(unittest.TestCase):
         color1 = (118, 118, 118)
         color2 = (255, 255, 255)
         ratio = self.checker.calculate_contrast_ratio(color1, color2)
-
-        # Should pass for large text (3:1 threshold)
-        compliance_large = self.checker.check_wcag_compliance(ratio, is_large_text=True)
-        # May or may not pass for normal text depending on exact ratio
-        compliance_normal = self.checker.check_wcag_compliance(ratio, is_large_text=False)
 
         # The ratio should be around 3.9:1, which passes large text AA
         self.assertGreater(ratio, 3.0)
@@ -106,12 +102,12 @@ class TestContrastChecker(unittest.TestCase):
         bg_color = (255, 255, 255)
         analysis = self.checker.analyze_contrast(text_color, bg_color)
 
-        self.assertEqual(analysis['text_color'], text_color)
-        self.assertEqual(analysis['bg_color'], bg_color)
-        self.assertAlmostEqual(analysis['contrast_ratio'], 21.0, places=1)
-        self.assertTrue(analysis['wcag_aa'])
-        self.assertTrue(analysis['wcag_aaa'])
-        self.assertIn('Excellent', analysis['level'])
+        self.assertEqual(analysis["text_color"], text_color)
+        self.assertEqual(analysis["bg_color"], bg_color)
+        self.assertAlmostEqual(analysis["contrast_ratio"], 21.0, places=1)
+        self.assertTrue(analysis["wcag_aa"])
+        self.assertTrue(analysis["wcag_aaa"])
+        self.assertIn("Excellent", analysis["level"])
 
     def test_known_contrast_values(self):
         """Test against known WCAG contrast values."""
@@ -122,5 +118,5 @@ class TestContrastChecker(unittest.TestCase):
         self.assertAlmostEqual(ratio, 7.0, delta=0.5)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

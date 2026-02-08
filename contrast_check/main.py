@@ -6,13 +6,13 @@ import argparse
 import json
 import sys
 from pathlib import Path
-from typing import List, Dict
-import cv2
-import numpy as np
+from typing import Dict, List
 
-from .ocr_extractor import OCRExtractor
+import cv2
+
 from .color_extractor import ColorExtractor
 from .contrast_checker import ContrastChecker
+from .ocr_extractor import OCRExtractor
 
 
 class ContrastAnalyzer:
@@ -23,9 +23,9 @@ class ContrastAnalyzer:
     def __init__(
         self,
         use_gpu: bool = False,
-        lang: str = 'en',
+        lang: str = "en",
         n_text_colors: int = 3,
-        n_bg_colors: int = 3
+        n_bg_colors: int = 3,
     ):
         """
         Initialize the contrast analyzer.
@@ -38,16 +38,11 @@ class ContrastAnalyzer:
         """
         self.ocr_extractor = OCRExtractor(use_gpu=use_gpu, lang=lang)
         self.color_extractor = ColorExtractor(
-            n_text_colors=n_text_colors,
-            n_bg_colors=n_bg_colors
+            n_text_colors=n_text_colors, n_bg_colors=n_bg_colors
         )
         self.contrast_checker = ContrastChecker()
 
-    def analyze_image(
-        self,
-        image_path: str,
-        is_large_text: bool = False
-    ) -> List[Dict]:
+    def analyze_image(self, image_path: str, is_large_text: bool = False) -> List[Dict]:
         """
         Analyze contrast ratios in an image.
 
@@ -74,54 +69,42 @@ class ContrastAnalyzer:
         for idx, region in enumerate(text_regions):
             # Create text mask
             text_mask = self.ocr_extractor.get_text_region_mask(
-                image_shape,
-                region['bbox']
+                image_shape, region["bbox"]
             )
 
             # Extract colors
-            text_color = self.color_extractor.extract_text_color(
-                image,
-                text_mask
-            )
+            text_color = self.color_extractor.extract_text_color(image, text_mask)
             bg_color = self.color_extractor.extract_background_color(
-                image,
-                text_mask,
-                region['bbox']
+                image, text_mask, region["bbox"]
             )
 
             # Analyze contrast
             analysis = self.contrast_checker.analyze_contrast(
-                text_color,
-                bg_color,
-                is_large_text
+                text_color, bg_color, is_large_text
             )
 
             # Add region info
             result = {
-                'index': idx,
-                'text': region['text'],
-                'confidence': round(region['confidence'], 3),
-                'bbox': region['bbox'],
-                'center': region['center'],
-                'text_color': text_color,
-                'text_color_hex': self.color_extractor.rgb_to_hex(text_color),
-                'bg_color': bg_color,
-                'bg_color_hex': self.color_extractor.rgb_to_hex(bg_color),
-                'contrast_ratio': analysis['contrast_ratio'],
-                'wcag_aa': analysis['wcag_aa'],
-                'wcag_aaa': analysis['wcag_aaa'],
-                'level': analysis['level']
+                "index": idx,
+                "text": region["text"],
+                "confidence": round(region["confidence"], 3),
+                "bbox": region["bbox"],
+                "center": region["center"],
+                "text_color": text_color,
+                "text_color_hex": self.color_extractor.rgb_to_hex(text_color),
+                "bg_color": bg_color,
+                "bg_color_hex": self.color_extractor.rgb_to_hex(bg_color),
+                "contrast_ratio": analysis["contrast_ratio"],
+                "wcag_aa": analysis["wcag_aa"],
+                "wcag_aaa": analysis["wcag_aaa"],
+                "level": analysis["level"],
             }
 
             results.append(result)
 
         return results
 
-    def generate_report(
-        self,
-        results: List[Dict],
-        output_format: str = 'json'
-    ) -> str:
+    def generate_report(self, results: List[Dict], output_format: str = "json") -> str:
         """
         Generate a report from analysis results.
 
@@ -132,10 +115,10 @@ class ContrastAnalyzer:
         Returns:
             Formatted report string
         """
-        if output_format == 'json':
+        if output_format == "json":
             return json.dumps(results, indent=2, ensure_ascii=False)
 
-        elif output_format == 'text':
+        elif output_format == "text":
             report_lines = []
             report_lines.append("=" * 80)
             report_lines.append("CONTRAST ANALYSIS REPORT")
@@ -154,24 +137,30 @@ class ContrastAnalyzer:
                     f"  Background Color: RGB{result['bg_color']} "
                     f"({result['bg_color_hex']})"
                 )
+                report_lines.append(f"  Contrast Ratio: {result['contrast_ratio']}:1")
                 report_lines.append(
-                    f"  Contrast Ratio: {result['contrast_ratio']}:1"
+                    f"  WCAG AA: {'✓ PASS' if result['wcag_aa'] else '✗ FAIL'}"
                 )
-                report_lines.append(f"  WCAG AA: {'✓ PASS' if result['wcag_aa'] else '✗ FAIL'}")
-                report_lines.append(f"  WCAG AAA: {'✓ PASS' if result['wcag_aaa'] else '✗ FAIL'}")
+                report_lines.append(
+                    f"  WCAG AAA: {'✓ PASS' if result['wcag_aaa'] else '✗ FAIL'}"
+                )
                 report_lines.append(f"  Level: {result['level']}")
                 report_lines.append("")
 
             # Summary
             total = len(results)
-            aa_pass = sum(1 for r in results if r['wcag_aa'])
-            aaa_pass = sum(1 for r in results if r['wcag_aaa'])
+            aa_pass = sum(1 for r in results if r["wcag_aa"])
+            aaa_pass = sum(1 for r in results if r["wcag_aaa"])
 
             report_lines.append("=" * 80)
             report_lines.append("SUMMARY")
             report_lines.append("=" * 80)
-            report_lines.append(f"WCAG AA Compliance: {aa_pass}/{total} ({aa_pass/total*100:.1f}%)")
-            report_lines.append(f"WCAG AAA Compliance: {aaa_pass}/{total} ({aaa_pass/total*100:.1f}%)")
+            report_lines.append(
+                f"WCAG AA Compliance: {aa_pass}/{total} ({aa_pass/total*100:.1f}%)"
+            )
+            report_lines.append(
+                f"WCAG AAA Compliance: {aaa_pass}/{total} ({aaa_pass/total*100:.1f}%)"
+            )
             report_lines.append("=" * 80)
 
             return "\n".join(report_lines)
@@ -185,40 +174,28 @@ def main():
     Command-line interface for ContrastCheck.
     """
     parser = argparse.ArgumentParser(
-        description='Analyze text-background contrast ratios in UI screenshots'
+        description="Analyze text-background contrast ratios in UI screenshots"
+    )
+    parser.add_argument("image", type=str, help="Path to the UI screenshot image")
+    parser.add_argument(
+        "-o", "--output", type=str, help="Output file path for the report"
     )
     parser.add_argument(
-        'image',
+        "-f",
+        "--format",
         type=str,
-        help='Path to the UI screenshot image'
+        choices=["json", "text"],
+        default="text",
+        help="Output format (default: text)",
     )
     parser.add_argument(
-        '-o', '--output',
-        type=str,
-        help='Output file path for the report'
+        "--large-text",
+        action="store_true",
+        help="Treat all text as large text (18pt+ or 14pt+ bold)",
     )
+    parser.add_argument("--gpu", action="store_true", help="Use GPU for OCR processing")
     parser.add_argument(
-        '-f', '--format',
-        type=str,
-        choices=['json', 'text'],
-        default='text',
-        help='Output format (default: text)'
-    )
-    parser.add_argument(
-        '--large-text',
-        action='store_true',
-        help='Treat all text as large text (18pt+ or 14pt+ bold)'
-    )
-    parser.add_argument(
-        '--gpu',
-        action='store_true',
-        help='Use GPU for OCR processing'
-    )
-    parser.add_argument(
-        '--lang',
-        type=str,
-        default='en',
-        help='Language for OCR (default: en)'
+        "--lang", type=str, default="en", help="Language for OCR (default: en)"
     )
 
     args = parser.parse_args()
@@ -245,12 +222,12 @@ def main():
 
     # Output report
     if args.output:
-        with open(args.output, 'w', encoding='utf-8') as f:
+        with open(args.output, "w", encoding="utf-8") as f:
             f.write(report)
         print(f"\nReport saved to: {args.output}")
     else:
         print("\n" + report)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -2,10 +2,10 @@
 Color extraction module using K-means clustering.
 """
 
-import numpy as np
-from typing import Tuple, List
-from PIL import Image
+from typing import List, Tuple
+
 import cv2
+import numpy as np
 from sklearn.cluster import KMeans
 
 
@@ -26,9 +26,7 @@ class ColorExtractor:
         self.n_bg_colors = n_bg_colors
 
     def extract_text_color(
-        self,
-        image: np.ndarray,
-        text_mask: np.ndarray
+        self, image: np.ndarray, text_mask: np.ndarray
     ) -> Tuple[int, int, int]:
         """
         Extract dominant text color from the masked region.
@@ -48,15 +46,14 @@ class ColorExtractor:
 
         # Convert BGR to RGB
         text_pixels_rgb = cv2.cvtColor(
-            text_pixels.reshape(-1, 1, 3),
-            cv2.COLOR_BGR2RGB
+            text_pixels.reshape(-1, 1, 3), cv2.COLOR_BGR2RGB
         ).reshape(-1, 3)
 
         # Use K-means to find dominant colors
         kmeans = KMeans(
             n_clusters=min(self.n_text_colors, len(text_pixels)),
             random_state=42,
-            n_init=10
+            n_init=10,
         )
         kmeans.fit(text_pixels_rgb)
 
@@ -73,7 +70,7 @@ class ColorExtractor:
         image: np.ndarray,
         text_mask: np.ndarray,
         bbox: List[List[float]],
-        margin: int = 10
+        margin: int = 10,
     ) -> Tuple[int, int, int]:
         """
         Extract background color around the text region.
@@ -109,15 +106,12 @@ class ColorExtractor:
 
         # Convert BGR to RGB
         bg_pixels_rgb = cv2.cvtColor(
-            bg_pixels.reshape(-1, 1, 3),
-            cv2.COLOR_BGR2RGB
+            bg_pixels.reshape(-1, 1, 3), cv2.COLOR_BGR2RGB
         ).reshape(-1, 3)
 
         # Use K-means to find dominant colors
         kmeans = KMeans(
-            n_clusters=min(self.n_bg_colors, len(bg_pixels)),
-            random_state=42,
-            n_init=10
+            n_clusters=min(self.n_bg_colors, len(bg_pixels)), random_state=42, n_init=10
         )
         kmeans.fit(bg_pixels_rgb)
 
@@ -140,4 +134,4 @@ class ColorExtractor:
         Returns:
             Hex color code string
         """
-        return '#{:02x}{:02x}{:02x}'.format(int(rgb[0]), int(rgb[1]), int(rgb[2]))
+        return "#{:02x}{:02x}{:02x}".format(int(rgb[0]), int(rgb[1]), int(rgb[2]))
