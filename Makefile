@@ -1,9 +1,10 @@
-.PHONY: help install install-dev test test-cov lint format clean build upload docs
+.PHONY: help venv install install-dev test test-cov lint format clean build upload docs
 
 help:
 	@echo "ContrastCheck - Development Commands"
 	@echo ""
 	@echo "Available targets:"
+	@echo "  venv          - Create virtual environment with uv"
 	@echo "  install       - Install package in production mode"
 	@echo "  install-dev   - Install package with development dependencies"
 	@echo "  test          - Run tests with pytest"
@@ -15,12 +16,17 @@ help:
 	@echo "  upload        - Upload package to PyPI"
 	@echo "  docs          - Generate documentation"
 
+venv:
+	uv venv --python 3.10
+	@echo "Virtual environment created. Activate it with:"
+	@echo "  source .venv/bin/activate  (macOS/Linux)"
+	@echo "  .venv\\Scripts\\activate     (Windows)"
+
 install:
-	pip install -e .
+	uv pip install -e .
 
 install-dev:
-	pip install -e .
-	pip install -r requirements-dev.txt
+	uv pip install -e ".[dev]"
 
 test:
 	pytest

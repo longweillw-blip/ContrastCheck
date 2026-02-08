@@ -1,6 +1,6 @@
 # ContrastCheck
 
-[![Python Version](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![Python Version](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 A powerful tool for analyzing text-background contrast ratios in UI screenshots using PaddleOCR and K-means clustering to ensure WCAG accessibility compliance.
@@ -18,27 +18,51 @@ A powerful tool for analyzing text-background contrast ratios in UI screenshots 
 
 ### Prerequisites
 
-- Python 3.8 or higher
-- pip package manager
+- Python 3.10 or higher
+- [uv](https://github.com/astral-sh/uv) - Fast Python package and project manager
+
+### Install uv
+
+If you don't have uv installed:
+
+```bash
+# On macOS and Linux
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# On Windows
+powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
+
+# Or via pip
+pip install uv
+```
 
 ### Install from source
 
 ```bash
 git clone https://github.com/longweillw-blip/ContrastCheck.git
 cd ContrastCheck
-pip install -e .
+
+# Create virtual environment with uv (Python 3.10+)
+uv venv --python 3.10
+
+# Activate virtual environment
+# On macOS/Linux:
+source .venv/bin/activate
+# On Windows:
+.venv\Scripts\activate
+
+# Install the package
+uv pip install -e .
 ```
 
 ### Install dependencies
 
 ```bash
-pip install -r requirements.txt
-```
+# Production dependencies
+uv pip install -r requirements.txt
 
-For development:
-
-```bash
-pip install -r requirements-dev.txt
+# Development dependencies
+uv pip install -r requirements-dev.txt
 ```
 
 ### GPU Support (Optional)
@@ -46,8 +70,8 @@ pip install -r requirements-dev.txt
 For faster OCR processing with GPU:
 
 ```bash
-pip uninstall paddlepaddle
-pip install paddlepaddle-gpu
+uv pip uninstall paddlepaddle
+uv pip install paddlepaddle-gpu
 ```
 
 ## Quick Start
@@ -227,6 +251,19 @@ ContrastCheck/
 
 ## Development
 
+### Setup Development Environment
+
+```bash
+# Create virtual environment with Python 3.10+
+uv venv --python 3.10
+
+# Activate virtual environment
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+
+# Install in development mode with dev dependencies
+uv pip install -e ".[dev]"
+```
+
 ### Running Tests
 
 Run all tests:
@@ -318,7 +355,7 @@ If you use ContrastCheck in your research or project, please cite:
 
 If you encounter any issues or have questions:
 
-- Open an issue on [GitHub](https://github.com/yourusername/ContrastCheck/issues)
+- Open an issue on [GitHub](https://github.com/longweillw-blip/ContrastCheck/issues)
 - Check the [examples](examples/) directory for usage examples
 - Read the [WCAG 2.1 documentation](https://www.w3.org/WAI/WCAG21/quickref/) for accessibility guidelines
 

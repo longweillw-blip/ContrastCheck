@@ -39,22 +39,45 @@ Enhancement suggestions are tracked as GitHub issues. When creating an enhanceme
 
 ## Development Setup
 
+### Prerequisites
+
+- Python 3.10 or higher
+- [uv](https://github.com/astral-sh/uv) package manager
+
+### Setup Steps
+
 1. Clone your fork:
 ```bash
 git clone https://github.com/yourusername/ContrastCheck.git
 cd ContrastCheck
 ```
 
-2. Create a virtual environment:
+2. Install uv if you haven't already:
 ```bash
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+# On macOS and Linux
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# On Windows
+powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
 ```
 
-3. Install development dependencies:
+3. Create a virtual environment with Python 3.10+:
 ```bash
-pip install -e .
-pip install -r requirements-dev.txt
+uv venv --python 3.10
+```
+
+4. Activate the virtual environment:
+```bash
+# On macOS/Linux:
+source .venv/bin/activate
+
+# On Windows:
+.venv\Scripts\activate
+```
+
+5. Install development dependencies:
+```bash
+uv pip install -e ".[dev]"
 ```
 
 ## Coding Standards
