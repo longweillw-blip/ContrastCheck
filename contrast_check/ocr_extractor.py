@@ -2,10 +2,10 @@
 OCR text extraction module using PaddleOCR.
 """
 
-import numpy as np
-from typing import List, Tuple, Dict, Any
-from PIL import Image
+from typing import Any, Dict, List, Tuple
+
 import cv2
+import numpy as np
 
 
 class OCRExtractor:
@@ -13,7 +13,7 @@ class OCRExtractor:
     Extract text and coordinates from images using PaddleOCR.
     """
 
-    def __init__(self, use_gpu: bool = False, lang: str = 'en'):
+    def __init__(self, use_gpu: bool = False, lang: str = "en"):
         """
         Initialize OCR extractor.
 
@@ -30,16 +30,10 @@ class OCRExtractor:
             )
 
         self.ocr = PaddleOCR(
-            use_angle_cls=True,
-            lang=lang,
-            use_gpu=use_gpu,
-            show_log=False
+            use_angle_cls=True, lang=lang, use_gpu=use_gpu, show_log=False
         )
 
-    def extract_text_regions(
-        self,
-        image_path: str
-    ) -> List[Dict[str, Any]]:
+    def extract_text_regions(self, image_path: str) -> List[Dict[str, Any]]:
         """
         Extract text regions from an image.
 
@@ -76,19 +70,19 @@ class OCRExtractor:
             center_x = int(np.mean(bbox_array[:, 0]))
             center_y = int(np.mean(bbox_array[:, 1]))
 
-            text_regions.append({
-                'text': text,
-                'confidence': confidence,
-                'bbox': bbox,
-                'center': (center_x, center_y)
-            })
+            text_regions.append(
+                {
+                    "text": text,
+                    "confidence": confidence,
+                    "bbox": bbox,
+                    "center": (center_x, center_y),
+                }
+            )
 
         return text_regions
 
     def get_text_region_mask(
-        self,
-        image_shape: Tuple[int, int, int],
-        bbox: List[List[float]]
+        self, image_shape: Tuple[int, int, int], bbox: List[List[float]]
     ) -> np.ndarray:
         """
         Create a binary mask for a text region.
@@ -100,7 +94,7 @@ class OCRExtractor:
         Returns:
             Binary mask with text region marked as True
         """
-        mask = np.zeros(image_shape[:2], dtype=bool)
+        mask = np.zeros(image_shape[:2], dtype=np.uint8)
         points = np.array(bbox, dtype=np.int32)
-        cv2.fillPoly(mask, [points], True)
-        return mask
+        cv2.fillPoly(mask, [points], 1)
+        return mask.astype(bool)

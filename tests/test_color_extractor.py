@@ -3,7 +3,9 @@ Unit tests for ColorExtractor module.
 """
 
 import unittest
+
 import numpy as np
+
 from contrast_check.color_extractor import ColorExtractor
 
 
@@ -68,10 +70,7 @@ class TestColorExtractor(unittest.TestCase):
         bbox = [[45, 45], [55, 45], [55, 55], [45, 55]]
 
         color = self.extractor.extract_background_color(
-            image,
-            text_mask,
-            bbox,
-            margin=10
+            image, text_mask, bbox, margin=10
         )
 
         # Should extract blue color (0, 0, 255) in RGB
@@ -81,19 +80,19 @@ class TestColorExtractor(unittest.TestCase):
         """Test RGB to hex conversion for black."""
         rgb = (0, 0, 0)
         hex_color = self.extractor.rgb_to_hex(rgb)
-        self.assertEqual(hex_color, '#000000')
+        self.assertEqual(hex_color, "#000000")
 
     def test_rgb_to_hex_white(self):
         """Test RGB to hex conversion for white."""
         rgb = (255, 255, 255)
         hex_color = self.extractor.rgb_to_hex(rgb)
-        self.assertEqual(hex_color, '#ffffff')
+        self.assertEqual(hex_color, "#ffffff")
 
     def test_rgb_to_hex_custom_color(self):
         """Test RGB to hex conversion for custom color."""
         rgb = (128, 64, 192)
         hex_color = self.extractor.rgb_to_hex(rgb)
-        self.assertEqual(hex_color, '#8040c0')
+        self.assertEqual(hex_color, "#8040c0")
 
     def test_extract_dominant_color_from_mixed(self):
         """Test extraction of dominant color from mixed pixels."""
@@ -109,8 +108,8 @@ class TestColorExtractor(unittest.TestCase):
         # Should extract red as dominant color (255, 0, 0) in RGB
         # Allow some tolerance due to clustering
         self.assertTrue(color[0] > 200)  # High red channel
-        self.assertTrue(color[1] < 50)   # Low green channel
-        self.assertTrue(color[2] < 50)   # Low blue channel
+        self.assertTrue(color[1] < 50)  # Low green channel
+        self.assertTrue(color[2] < 50)  # Low blue channel
 
     def test_color_extraction_boundary_cases(self):
         """Test color extraction at image boundaries."""
@@ -128,5 +127,5 @@ class TestColorExtractor(unittest.TestCase):
         self.assertEqual(len(color), 3)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
